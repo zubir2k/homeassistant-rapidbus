@@ -1,5 +1,5 @@
 /*
- * rapidbus-card: live map + arrivals for the Prasarana Bus (RapidKL) integration.
+ * rapidbus-card: live map + arrivals for the Rapid Bus Tracker integration (unofficial).
  * Ships inside custom_components/prasarana_bus and is loaded automatically.
  * Map: Leaflet 1.9.4 (BSD-2) with OpenStreetMap tiles. Bus sprites: our own (tools/bus3d.py).
  */
@@ -306,7 +306,7 @@ class RapidBusCard extends HTMLElement {
       this._frameKey = frameKey;
       if (c.zoom && eta?.attributes.latitude != null) this._map.setView([eta.attributes.latitude, eta.attributes.longitude], c.zoom);
       else if (nb && eta?.attributes.latitude != null) {
-        // like Pulse: frame your stop and the bus that's coming
+        // frame your stop and the bus that's coming
         this._map.fitBounds(L.latLngBounds([[eta.attributes.latitude, eta.attributes.longitude], [nb.latitude, nb.longitude]]), { padding: [40, 40], maxZoom: 16 });
       } else if (this._routeBounds?.isValid()) this._map.fitBounds(this._routeBounds, { padding: [16, 16] });
       else return;
@@ -360,7 +360,7 @@ if (!customElements.get("rapidbus-card-editor")) customElements.define("rapidbus
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === "rapidbus-card")) {
   window.customCards.push({
-    type: "rapidbus-card", name: "Rapid Bus", preview: true,
+    type: "rapidbus-card", name: "Bus Tracker", preview: true,
     description: "Live RapidKL / MRT feeder buses on a map, with arrivals at your stop.",
     documentationURL: "https://github.com/zubir2k/homeassistant-rapidbus",
   });
