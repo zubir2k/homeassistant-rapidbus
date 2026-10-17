@@ -1,23 +1,16 @@
-<p align="center">
-  <img src="custom_components/prasarana_bus/brand/logo@2x.png" alt="Bus Tracker" width="260">
-</p>
+![Bus Tracker](custom_components/prasarana_bus/brand/logo@2x.png)
+## Rapid Bus Tracker for Home Assistant
+![GitHub Repo stars](https://img.shields.io/github/stars/zubir2k/homeassistant-rapidbus?style=social)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
+[![hacs_badge](https://img.shields.io/badge/HACS-Integration-41BDF5.svg)](https://github.com/hacs/integration)
+![GitHub all releases](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Download%20Count&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.prasarana_bus.total)
+[![Buy](https://img.shields.io/badge/Belanja-Coffee-yellow.svg)](https://zubirco.de/buymecoffee)
+[![Github Releases](https://img.shields.io/github/v/release/zubir2k/homeassistant-rapidbus)](https://github.com/zubir2k/homeassistant-rapidbus/releases)
 
-<h1 align="center">Rapid Bus Tracker for Home Assistant</h1>
+Live RapidKL and MRT feeder buses in Home Assistant: every bus on the map, an ETA to your stop, \
+and a built-in card that shows it all at a glance.
 
-<p align="center">
-  Live RapidKL and MRT feeder buses in Home Assistant: every bus on the map, an ETA to your stop,<br>
-  and a built-in card that shows it all at a glance.
-</p>
-
-<p align="center">
-  <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
-  <a href="https://github.com/zubir2k/homeassistant-rapidbus/releases"><img src="https://img.shields.io/github/v/release/zubir2k/homeassistant-rapidbus" alt="Release"></a>
-  <img src="https://img.shields.io/badge/Home%20Assistant-2024.10%2B-03A9F4" alt="Home Assistant 2024.10+">
-</p>
-
-<p align="center">
-  <img src="docs/rapidbus-card.png" alt="Bus Tracker card" width="420">
-</p>
+<img src="docs/rapidbus-card.png" alt="Bus Tracker card" width="420">
 
 ## Features
 
@@ -34,6 +27,8 @@ Networks: RapidKL buses, MRT feeder buses, Rapid Kuantan and Rapid Penang.
 ## Installation
 
 ### HACS (recommended)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zubir2k&repository=homeassistant-rapidbus&category=integration)
+
 1. HACS → ⋮ → **Custom repositories** → add `https://github.com/zubir2k/homeassistant-rapidbus` as **Integration**.
 2. Install **Rapid Bus Tracker** and restart Home Assistant.
 
@@ -41,6 +36,8 @@ Networks: RapidKL buses, MRT feeder buses, Rapid Kuantan and Rapid Penang.
 Copy `custom_components/prasarana_bus` into `/config/custom_components/` and restart.
 
 ## Setup
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=prasarana_bus)
 
 **Settings → Devices & services → Add integration → Rapid Bus Tracker**, then pick:
 
@@ -181,6 +178,7 @@ To be told when a bus is at your stop, trigger on `sensor.…_next_bus_status` c
 - Bus data © Prasarana Malaysia Berhad via [data.gov.my](https://data.gov.my), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). ETAs, statuses and timetable estimates are derived from that data by this integration and are not published by Prasarana.
 - Maps by [Leaflet](https://leafletjs.com) (BSD-2, bundled) and © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 - Bus icons are original artwork, generated with `tools/bus3d.py`.
+- Join our Community [Home Assistant Malaysia](https://www.facebook.com/groups/homeassistantmalaysia)
 
 ## Disclaimer
 
