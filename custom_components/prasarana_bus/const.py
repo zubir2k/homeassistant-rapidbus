@@ -1,4 +1,4 @@
-"""Constants for Prasarana Bus."""
+"""Constants for Rapid Bus Tracker."""
 from datetime import timedelta
 
 DOMAIN = "prasarana_bus"
