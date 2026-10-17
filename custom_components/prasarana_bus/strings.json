@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Prasarana Bus",
+        "description": "Choose the bus network.",
+        "data": {
+          "category": "Network"
+        }
+      },
+      "route": {
+        "title": "Choose route",
+        "description": "Pick the bus route number to monitor.",
+        "data": {
+          "route": "Route"
+        }
+      },
+      "stop": {
+        "title": "Your stop (optional)",
+        "description": "Route {route}. Pick a stop to get an estimated arrival time and distance of the next bus. Stops are listed per direction.",
+        "data": {
+          "stop": "Stop"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not download route data from data.gov.my."
+    },
+    "abort": {
+      "already_configured": "This route and stop are already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Update interval",
+          "stale_minutes": "Remove a bus from the map after it has been missing for",
+          "timetable_fallback": "Use the timetable when no bus with GPS is heading to your stop"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "active_buses": {
+        "name": "Active buses"
+      },
+      "next_bus_eta": {
+        "name": "Next bus ETA"
+      },
+      "next_bus_distance": {
+        "name": "Next bus distance"
+      },
+      "feed_time": {
+        "name": "Feed updated"
+      },
+      "next_bus_status": {
+        "name": "Next bus status",
+        "state": {
+          "approaching": "Approaching",
+          "at_stop": "At stop",
+          "scheduled": "Scheduled (timetable)",
+          "none_heading_here": "None heading here",
+          "no_buses": "No buses on GPS",
+          "no_service": "No service"
+        }
+      },
+      "next_scheduled": {
+        "name": "Next scheduled bus"
+      }
+    }
+  },
+  "services": {
+    "refresh_static": {
+      "name": "Refresh route data",
+      "description": "Re-download GTFS static data (routes, stops, shapes) and reload all routes."
+    }
+  }
+}
