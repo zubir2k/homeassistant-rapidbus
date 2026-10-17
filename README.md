@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="custom_components/prasarana_bus/brand/logo@2x.png" alt="rapidbus" width="260">
+  <img src="custom_components/prasarana_bus/brand/logo@2x.png" alt="Bus Tracker" width="260">
 </p>
 
-<h1 align="center">RapidBus Tracker for Home Assistant</h1>
+<h1 align="center">Rapid Bus Tracker for Home Assistant</h1>
 
 <p align="center">
   Live RapidKL and MRT feeder buses in Home Assistant: every bus on the map, an ETA to your stop,<br>
@@ -16,12 +16,12 @@
 </p>
 
 <p align="center">
-  <img src="docs/rapidbus-card.png" alt="Rapid Bus card" width="420">
+  <img src="docs/rapidbus-card.png" alt="Bus Tracker card" width="420">
 </p>
 
 ## Features
 
-- **Rapid Bus card, built in.** Live map with the route line, stop dots and 3D buses that turn to face where
+- **Bus Tracker card, built in.** Live map with the route line, stop dots and 3D buses that turn to face where
   they're heading, plus your next arrivals. No other frontend add-ons needed.
 - **Every bus is a device tracker.** Buses appear on the HA Map as they start running and disappear when they stop.
 - **ETA to your stop.** Estimated from each bus's position along the actual route, not as the crow flies.
@@ -29,20 +29,20 @@
 - **Follows your theme.** Light and dark map tiles, yellow chips for feeder routes, navy for RapidKL.
 - **No API key.** Data comes from the official [data.gov.my GTFS API](https://developer.data.gov.my/realtime-api/gtfs-realtime).
 
-Networks: RapidKL buses, MRT feeder buses and Rapid Penang.
+Networks: RapidKL buses, MRT feeder buses, Rapid Kuantan and Rapid Penang.
 
 ## Installation
 
 ### HACS (recommended)
 1. HACS → ⋮ → **Custom repositories** → add `https://github.com/zubir2k/homeassistant-rapidbus` as **Integration**.
-2. Install **Prasarana Bus (RapidKL)** and restart Home Assistant.
+2. Install **Rapid Bus Tracker** and restart Home Assistant.
 
 ### Manual
 Copy `custom_components/prasarana_bus` into `/config/custom_components/` and restart.
 
 ## Setup
 
-**Settings → Devices & services → Add integration → Prasarana Bus**, then pick:
+**Settings → Devices & services → Add integration → Rapid Bus Tracker**, then pick:
 
 1. the network (e.g. MRT Feeder),
 2. the route number (e.g. T807),
@@ -54,10 +54,10 @@ Add the integration again for each route or stop you care about.
 **Options:** update interval (default 30 s, minimum 15 s), how long a missing bus stays on the map (default
 10 min), and the timetable fallback (default on).
 
-## The Rapid Bus card
+## The Bus Tracker card
 
 The card is served by the integration and loads automatically. Edit a dashboard → **Add card** → search
-**Rapid Bus**, then choose your route's ETA sensor. Or in YAML:
+**Bus Tracker**, then choose your route's ETA sensor. Or in YAML:
 
 ```yaml
 type: custom:rapidbus-card
@@ -178,8 +178,12 @@ To be told when a bus is at your stop, trigger on `sensor.…_next_bus_status` c
 
 ## Credits
 
-- Bus data © Prasarana Malaysia Berhad via [data.gov.my](https://data.gov.my), CC BY 4.0.
+- Bus data © Prasarana Malaysia Berhad via [data.gov.my](https://data.gov.my), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). ETAs, statuses and timetable estimates are derived from that data by this integration and are not published by Prasarana.
 - Maps by [Leaflet](https://leafletjs.com) (BSD-2, bundled) and © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 - Bus icons are original artwork, generated with `tools/bus3d.py`.
 
-This is an unofficial community integration, not affiliated with or endorsed by Prasarana.
+## Disclaimer
+
+This is an independent, unofficial community project. It is not affiliated with, endorsed by or connected to Prasarana Malaysia Berhad, RapidKL or any Rapid operator. All product names, logos and brands belong to their respective owners; RapidKL and route names are used only to describe which buses the integration works with.
+
+ETAs are estimates and can be wrong or missing, because not every bus reports its position. Don't rely on them for time-critical travel; check official channels for service updates.
