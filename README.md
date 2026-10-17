@@ -2,7 +2,7 @@
   <img src="custom_components/prasarana_bus/brand/logo@2x.png" alt="rapidbus" width="260">
 </p>
 
-<h1 align="center">Rapid Bus for Home Assistant</h1>
+<h1 align="center">RapidBus Tracker for Home Assistant</h1>
 
 <p align="center">
   Live RapidKL and MRT feeder buses in Home Assistant: every bus on the map, an ETA to your stop,<br>
