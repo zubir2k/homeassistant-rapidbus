@@ -1,5 +1,6 @@
 {
   "name": "Rapid Bus Tracker",
   "homeassistant": "2024.10.0",
+  "country": "MY",
   "render_readme": true
 }
