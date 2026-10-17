@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Prasarana Bus",
+        "title": "Rapid Bus Tracker",
         "description": "Choose the bus network.",
         "data": {
           "category": "Network"
