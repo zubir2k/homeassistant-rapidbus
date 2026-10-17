@@ -1,4 +1,4 @@
-"""Prasarana Bus (RapidKL) live tracking for Home Assistant."""
+"""Rapid Bus Tracker: unofficial live tracking of RapidKL, MRT feeder, Rapid Kuantan and Rapid Penang buses for Home Assistant."""
 from __future__ import annotations
 
 import aiohttp
