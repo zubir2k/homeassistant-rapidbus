@@ -1,6 +1,6 @@
 {
   "domain": "prasarana_bus",
-  "name": "Prasarana Bus (RapidKL)",
+  "name": "Rapid Bus Tracker",
   "codeowners": [
     "@zubir2k"
   ],
@@ -13,7 +13,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/zubir2k/homeassistant-rapidbus/issues",
   "requirements": [],
-  "version": "0.4.4",
+  "version": "0.4.5",
   "after_dependencies": [
     "frontend"
   ]
