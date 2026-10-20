@@ -365,4 +365,29 @@ if (!window.customCards.some((c) => c.type === "rapidbus-card")) {
     documentationURL: "https://github.com/zubir2k/homeassistant-rapidbus",
   });
 }
+// Self-heal: if the dashboard drew before this script loaded, HA left an error tile
+// in our place and doesn't always redraw it. Find those tiles and ask HA to rebuild them.
+const CARD_TYPE = "custom:rapidbus-card";
+function healErrorCards() {
+  const found = [];
+  const walk = (root) => {
+    for (const el of root.querySelectorAll("*")) {
+      const tag = el.localName;
+      if (tag === "hui-error-card") {
+        const cfg = el._config || el.config;
+        if (cfg?.origConfig?.type === CARD_TYPE) found.push(el);
+      } else if (tag === "hui-card") {
+        const el2 = el.shadowRoot?.firstElementChild || el.firstElementChild;
+        if (el.config?.type === CARD_TYPE && el2 && el2.localName === "hui-error-card") found.push(el2);
+      }
+      if (el.shadowRoot) walk(el.shadowRoot);
+    }
+  };
+  try { walk(document); } catch (e) { /* never break the dashboard */ }
+  for (const el of new Set(found)) {
+    el.dispatchEvent(new Event("ll-rebuild", { bubbles: true, composed: true }));
+  }
+  return found.length;
+}
+[0, 1000, 3000, 8000].forEach((ms) => setTimeout(healErrorCards, ms));
 console.info(`%c RAPIDBUS-CARD %c ${VERSION} `, "background:#e30613;color:#fff;font-weight:700", "background:#1d2fa0;color:#fff");
