@@ -13,7 +13,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/zubir2k/homeassistant-rapidbus/issues",
   "requirements": [],
-  "version": "0.4.5",
+  "version": "0.4.6",
   "after_dependencies": [
     "frontend"
   ]
