@@ -22,7 +22,7 @@ and a built-in card that shows it all at a glance.
 - **Follows your theme.** Light and dark map tiles, yellow chips for feeder routes, navy for RapidKL.
 - **No API key.** Data comes from the official [data.gov.my GTFS API](https://developer.data.gov.my/realtime-api/gtfs-realtime).
 
-Networks: RapidKL buses, MRT feeder buses, Rapid Kuantan and Rapid Penang.
+Networks: RapidKL buses, MRT feeder buses, and Rapid Penang.
 
 ## Installation
 
