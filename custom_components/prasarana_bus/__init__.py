@@ -3,10 +3,7 @@ from __future__ import annotations
 
 import aiohttp
 import asyncio
-import json
-from pathlib import Path
 
-from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
@@ -15,6 +12,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
 
+from .card_registration import async_register_card, async_unregister_card
 from .const import CONF_CATEGORY, CONF_ROUTE, CONF_STOP, DOMAIN, NO_STOP
 from .coordinator import RouteCoordinator
 from .data import get_data
@@ -22,22 +20,11 @@ from .gtfs_static import build_stop_schedule
 
 PLATFORMS = [Platform.SENSOR, Platform.DEVICE_TRACKER]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-CARD_URL = "/prasarana_bus_static"
-_VERSION = json.loads((Path(__file__).parent / "manifest.json").read_text())["version"]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Serve the bundled rapidbus-card and load it in every dashboard (no HACS frontend install needed)."""
-    if hass.http is None:  # e.g. tests without http
-        return True
-    await hass.http.async_register_static_paths(
-        [StaticPathConfig(CARD_URL, str(Path(__file__).parent / "frontend"), True)]
-    )
-    try:
-        from homeassistant.components.frontend import add_extra_js_url
-        add_extra_js_url(hass, f"{CARD_URL}/rapidbus-card.js?v={_VERSION}")
-    except (ImportError, KeyError):  # frontend not loaded
-        pass
+    """Serve the bundled rapidbus-card and register it for dashboards (runs once per HA start)."""
+    await async_register_card(hass)
     return True
 
 type PrasaranaConfigEntry = ConfigEntry[RouteCoordinator]
@@ -81,3 +68,12 @@ async def _async_reload(hass: HomeAssistant, entry: PrasaranaConfigEntry) -> Non
 
 async def async_unload_entry(hass: HomeAssistant, entry: PrasaranaConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: PrasaranaConfigEntry) -> None:
+    """Remove the card's dashboard resource when the last entry is deleted.
+
+    Not done on unload: reloading an entry should not make the card disappear.
+    """
+    if not [e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id]:
+        await async_unregister_card(hass)
