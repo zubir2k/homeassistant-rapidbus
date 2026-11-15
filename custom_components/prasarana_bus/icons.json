@@ -1,0 +1,34 @@
+{
+  "entity": {
+    "device_tracker": {
+      "bus": {
+        "default": "mdi:bus"
+      }
+    },
+    "sensor": {
+      "active_buses": {
+        "default": "mdi:bus-multiple"
+      },
+      "next_bus_eta": {
+        "default": "mdi:bus-clock"
+      },
+      "next_bus_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "feed_time": {
+        "default": "mdi:clock-check-outline"
+      },
+      "next_bus_status": {
+        "default": "mdi:bus-stop"
+      },
+      "next_scheduled": {
+        "default": "mdi:timetable"
+      }
+    }
+  },
+  "services": {
+    "refresh_static": {
+      "service": "mdi:refresh"
+    }
+  }
+}

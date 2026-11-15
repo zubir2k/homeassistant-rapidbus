@@ -6,12 +6,14 @@ from datetime import datetime, timezone
 from homeassistant.components.sensor import (
     SensorDeviceClass, SensorEntity, SensorStateClass,
 )
-from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, EntityCategory, UnitOfTime
+from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, EntityCategory, UnitOfLength, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import BusState, RouteCoordinator
 from .entity import RouteEntity
+
+PARALLEL_UPDATES = 0
 
 
 def _bus_attr(s: BusState) -> dict:
@@ -177,7 +179,7 @@ class NextBusDistanceSensor(RouteEntity, SensorEntity):
     _attr_translation_key = "next_bus_distance"
     _attr_icon = "mdi:map-marker-distance"
     _attr_device_class = SensorDeviceClass.DISTANCE
-    _attr_native_unit_of_measurement = "km"
+    _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_suggested_display_precision = 1
 
     def __init__(self, coordinator: RouteCoordinator) -> None:

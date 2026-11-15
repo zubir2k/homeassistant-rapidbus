@@ -5,6 +5,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import logging
+import struct
 from zoneinfo import ZoneInfo
 
 import aiohttp
@@ -72,8 +73,12 @@ class RouteCoordinator(DataUpdateCoordinator[RouteData]):
     async def _async_update_data(self) -> RouteData:
         try:
             header_ts, vehicles = await get_data(self.hass).async_get_realtime(self.category)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            raise UpdateFailed(f"Realtime feed error: {err}") from err
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError, IndexError, struct.error) as err:
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="realtime_feed_error",
+                translation_placeholders={"error": str(err)},
+            ) from err
         return await self.hass.async_add_executor_job(self._process, header_ts, vehicles)
 
     def _process(self, header_ts: int, vehicles: list[Vehicle]) -> RouteData:

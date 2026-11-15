@@ -1,7 +1,15 @@
 """Constants for Rapid Bus Tracker."""
 from datetime import timedelta
+from enum import StrEnum
 
 DOMAIN = "prasarana_bus"
+
+
+class PrasaranaService(StrEnum):
+    """Services for Rapid Bus Tracker."""
+
+    REFRESH_STATIC = "refresh_static"
+
 
 RT_URL = "https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana/?category={category}"
 STATIC_URL = "https://api.data.gov.my/gtfs-static/prasarana?category={category}"

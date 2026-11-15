@@ -7,6 +7,7 @@ from datetime import date, datetime
 import io
 import math
 import re
+import threading
 import zipfile
 
 EARTH_R = 6371.0088
@@ -28,8 +29,11 @@ def _bearing(lat1, lon1, lat2, lon2) -> float:
     return (math.degrees(math.atan2(x, y)) + 360) % 360
 
 
-def _secs(t: str) -> int:
-    h, m, s = (int(x) for x in t.split(":"))
+def _secs(t: str) -> int | None:
+    try:
+        h, m, s = (int(x) for x in t.strip().split(":"))
+    except (ValueError, AttributeError):
+        return None
     return h * 3600 + m * 60 + s
 
 
@@ -104,36 +108,41 @@ class GtfsStatic:
     """Parsed static feed for one category."""
 
     def __init__(self, zip_bytes: bytes) -> None:
+        self._lock = threading.Lock()
         self._zip = zipfile.ZipFile(io.BytesIO(zip_bytes))
         self.routes: dict[str, Route] = {}
         self._trips_by_route: dict[str, list[dict]] = {}
         self._details: dict[str, RouteDetail] = {}
         self._load_routes()
 
-    def _rows(self, name: str):
+    def _csv(self, name: str) -> list[dict[str, str]]:
         with self._zip.open(name) as fh:
-            yield from csv.DictReader(io.TextIOWrapper(fh, "utf-8-sig"))
+            return list(csv.DictReader(io.TextIOWrapper(fh, "utf-8-sig")))
+
+    def _rows(self, name: str):
+        yield from self._csv(name)
 
     def _load_routes(self) -> None:
-        for r in self._rows("routes.txt"):
-            rid = r["route_id"].strip()
-            short = (r.get("route_short_name") or "").strip()
-            long_ = (r.get("route_long_name") or "").strip()
-            if not short:  # MRT feeder: number lives in long_name, realtime uses it
-                short, long_, key = long_, "", long_
-            else:  # RapidKL: realtime uses route_id
-                key = rid
-            if not key:
-                continue
-            if key in self.routes:
-                self.routes[key].route_ids.add(rid)
-            else:
-                self.routes[key] = Route(key, {rid}, short, long_)
-        rid_to_key = {rid: k for k, r in self.routes.items() for rid in r.route_ids}
-        for t in self._rows("trips.txt"):
-            key = rid_to_key.get(t["route_id"].strip())
-            if key:
-                self._trips_by_route.setdefault(key, []).append(t)
+        with self._lock:
+            for r in self._csv("routes.txt"):
+                rid = r["route_id"].strip()
+                short = (r.get("route_short_name") or "").strip()
+                long_ = (r.get("route_long_name") or "").strip()
+                if not short:  # MRT feeder: number lives in long_name, realtime uses it
+                    short, long_, key = long_, "", long_
+                else:  # RapidKL: realtime uses route_id
+                    key = rid
+                if not key:
+                    continue
+                if key in self.routes:
+                    self.routes[key].route_ids.add(rid)
+                else:
+                    self.routes[key] = Route(key, {rid}, short, long_)
+            rid_to_key = {rid: k for k, r in self.routes.items() for rid in r.route_ids}
+            for t in self._csv("trips.txt"):
+                key = rid_to_key.get(t["route_id"].strip())
+                if key:
+                    self._trips_by_route.setdefault(key, []).append(t)
 
     def match_route(self, realtime_route_id: str) -> str | None:
         """Map a realtime route_id to a route key."""
@@ -146,60 +155,61 @@ class GtfsStatic:
 
     def detail(self, key: str) -> RouteDetail:
         """Build shapes + stops for a route (cached)."""
-        if key in self._details:
-            return self._details[key]
-        route = self.routes[key]
-        trips = self._trips_by_route.get(key, [])
-        rep: dict[str, dict] = {}  # shape_id -> representative trip
-        for t in trips:
-            rep.setdefault(t.get("shape_id", "").strip(), t)
-        rep_trips = {t["trip_id"]: sid for sid, t in rep.items()}
+        with self._lock:
+            if key in self._details:
+                return self._details[key]
+            route = self.routes[key]
+            trips = self._trips_by_route.get(key, [])
+            rep: dict[str, dict] = {}  # shape_id -> representative trip
+            for t in trips:
+                rep.setdefault(t.get("shape_id", "").strip(), t)
+            rep_trips = {t["trip_id"]: sid for sid, t in rep.items()}
 
-        pts: dict[str, list[tuple[int, float, float]]] = {s: [] for s in rep}
-        for r in self._rows("shapes.txt"):
-            sid = r["shape_id"].strip()
-            if sid in pts:
-                pts[sid].append((int(float(r["shape_pt_sequence"])), float(r["shape_pt_lat"]), float(r["shape_pt_lon"])))
+            pts: dict[str, list[tuple[int, float, float]]] = {s: [] for s in rep}
+            for r in self._csv("shapes.txt"):
+                sid = r["shape_id"].strip()
+                if sid in pts:
+                    pts[sid].append((int(float(r["shape_pt_sequence"])), float(r["shape_pt_lat"]), float(r["shape_pt_lon"])))
 
-        seq: dict[str, list[tuple[int, str, str]]] = {tid: [] for tid in rep_trips}
-        for r in self._rows("stop_times.txt"):
-            tid = r["trip_id"]
-            if tid in seq:
-                seq[tid].append((int(r["stop_sequence"]), r["stop_id"].strip(), r.get("arrival_time") or ""))
-        stop_ids = {s for v in seq.values() for _, s, _ in v}
-        stops: dict[str, Stop] = {}
-        for r in self._rows("stops.txt"):
-            sid = r["stop_id"].strip()
-            if sid in stop_ids:
-                stops[sid] = Stop(sid, r["stop_name"].strip(), float(r["stop_lat"]), float(r["stop_lon"]))
+            seq: dict[str, list[tuple[int, str, str]]] = {tid: [] for tid in rep_trips}
+            for r in self._csv("stop_times.txt"):
+                tid = r["trip_id"]
+                if tid in seq:
+                    seq[tid].append((int(float(r["stop_sequence"])), r["stop_id"].strip(), r.get("arrival_time") or ""))
+            stop_ids = {s for v in seq.values() for _, s, _ in v}
+            stops: dict[str, Stop] = {}
+            for r in self._csv("stops.txt"):
+                sid = r["stop_id"].strip()
+                if sid in stop_ids:
+                    stops[sid] = Stop(sid, r["stop_name"].strip(), float(r["stop_lat"]), float(r["stop_lon"]))
 
-        shapes: list[Shape] = []
-        for tid, sid in rep_trips.items():
-            p = [(la, lo) for _, la, lo in sorted(pts.get(sid, []))]
-            if len(p) < 2:
-                continue
-            cum = [0.0]
-            for i in range(1, len(p)):
-                cum.append(cum[-1] + haversine(*p[i - 1], *p[i]))
-            shape = Shape(sid, (rep[sid].get("trip_headsign") or "").strip(), p, cum)
-            st = sorted(seq.get(tid, []))
-            for _, stop_id, _ in st:
-                s = stops.get(stop_id)
-                if s:
-                    off, along, _ = shape.project(s.lat, s.lon)
-                    if off < 0.15:
-                        shape.stops.append((stop_id, along))
-            times = [x[2] for x in st if x[2]]
-            if len(times) >= 2:
-                dur = (_secs(times[-1]) - _secs(times[0])) / 3600
-                if dur > 0:
-                    shape.avg_kmh = max(8.0, min(40.0, cum[-1] / dur))
-            if not shape.headsign and shape.stops:
-                shape.headsign = stops[shape.stops[-1][0]].name
-            shapes.append(shape)
-        detail = RouteDetail(route, shapes, stops)
-        self._details[key] = detail
-        return detail
+            shapes: list[Shape] = []
+            for tid, sid in rep_trips.items():
+                p = [(la, lo) for _, la, lo in sorted(pts.get(sid, []))]
+                if len(p) < 2:
+                    continue
+                cum = [0.0]
+                for i in range(1, len(p)):
+                    cum.append(cum[-1] + haversine(*p[i - 1], *p[i]))
+                shape = Shape(sid, (rep[sid].get("trip_headsign") or "").strip(), p, cum)
+                st = sorted(seq.get(tid, []))
+                for _, stop_id, _ in st:
+                    s = stops.get(stop_id)
+                    if s:
+                        off, along, _ = shape.project(s.lat, s.lon)
+                        if off < 0.15:
+                            shape.stops.append((stop_id, along))
+                times = [s for x in st if x[2] and (s := _secs(x[2])) is not None]
+                if len(times) >= 2:
+                    dur = (times[-1] - times[0]) / 3600
+                    if dur > 0:
+                        shape.avg_kmh = max(8.0, min(40.0, cum[-1] / dur))
+                if not shape.headsign and shape.stops:
+                    shape.headsign = stops[shape.stops[-1][0]].name
+                shapes.append(shape)
+            detail = RouteDetail(route, shapes, stops)
+            self._details[key] = detail
+            return detail
 
 
 def _angle_diff(a: float, b: float) -> float:
@@ -355,49 +365,53 @@ class StopSchedule:
 
 def build_stop_schedule(static: "GtfsStatic", key: str, stop_id: str) -> StopSchedule:
     """Scan trips/stop_times once for one route + stop (run in executor)."""
-    trips = {t["trip_id"]: t for t in static._trips_by_route.get(key, [])}
-    services: dict[str, tuple[set[int], str, str]] = {}
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    names = set(static._zip.namelist())
-    if "calendar.txt" in names:
-        for r in static._rows("calendar.txt"):
-            services[r["service_id"].strip()] = (
-                {i for i, d in enumerate(days) if r.get(d, "0").strip() == "1"},
-                r["start_date"].strip(), r["end_date"].strip())
-    exceptions: dict[tuple[str, str], int] = {}
-    if "calendar_dates.txt" in names:
-        for r in static._rows("calendar_dates.txt"):
-            exceptions[(r["service_id"].strip(), r["date"].strip())] = int(r["exception_type"])
+    with static._lock:
+        trips = {t["trip_id"]: t for t in static._trips_by_route.get(key, [])}
+        services: dict[str, tuple[set[int], str, str]] = {}
+        days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+        names = set(static._zip.namelist())
+        if "calendar.txt" in names:
+            for r in static._csv("calendar.txt"):
+                services[r["service_id"].strip()] = (
+                    {i for i, d in enumerate(days) if r.get(d, "0").strip() == "1"},
+                    r["start_date"].strip(), r["end_date"].strip())
+        exceptions: dict[tuple[str, str], int] = {}
+        if "calendar_dates.txt" in names:
+            for r in static._csv("calendar_dates.txt"):
+                exceptions[(r["service_id"].strip(), r["date"].strip())] = int(r["exception_type"])
 
-    first: dict[str, int] = {}  # trip -> earliest time (seconds)
-    at_stop: dict[str, list[int]] = {}
-    for r in static._rows("stop_times.txt"):
-        tid = r["trip_id"]
-        if tid not in trips:
-            continue
-        t = (r.get("arrival_time") or r.get("departure_time") or "").strip()
-        if not t:
-            continue
-        s = _secs(t)
-        if tid not in first or s < first[tid]:
-            first[tid] = s
-        if r["stop_id"].strip() == stop_id:
-            at_stop.setdefault(tid, []).append(s)
-
-    freqs: dict[str, list[tuple[int, int, int]]] = {}
-    if "frequencies.txt" in names:
-        for r in static._rows("frequencies.txt"):
+        first: dict[str, int] = {}  # trip -> earliest time (seconds)
+        at_stop: dict[str, list[int]] = {}
+        for r in static._csv("stop_times.txt"):
             tid = r["trip_id"]
-            if tid in trips:
-                freqs.setdefault(tid, []).append(
-                    (_secs(r["start_time"]), _secs(r["end_time"]), int(r["headway_secs"])))
+            if tid not in trips:
+                continue
+            t = (r.get("arrival_time") or r.get("departure_time") or "").strip()
+            s = _secs(t)
+            if s is None:
+                continue
+            if tid not in first or s < first[tid]:
+                first[tid] = s
+            if r["stop_id"].strip() == stop_id:
+                at_stop.setdefault(tid, []).append(s)
+
+        freqs: dict[str, list[tuple[int, int, int]]] = {}
+        if "frequencies.txt" in names:
+            for r in static._csv("frequencies.txt"):
+                tid = r["trip_id"]
+                if tid in trips:
+                    start_s = _secs(r.get("start_time", ""))
+                    end_s = _secs(r.get("end_time", ""))
+                    if start_s is not None and end_s is not None:
+                        freqs.setdefault(tid, []).append(
+                            (start_s, end_s, int(float(r["headway_secs"]))))
 
     sched = StopSchedule(services, exceptions)
     for tid, times in at_stop.items():
         trip = trips[tid]
         sid = trip["service_id"].strip()
         head = (trip.get("trip_headsign") or "").strip()
-        if tid in freqs:
+        if tid in freqs and tid in first:
             for t in times:
                 off = t - first[tid]
                 for start, end, hw in freqs[tid]:

@@ -79,7 +79,9 @@ def _our_resources(resources: Any) -> list[dict[str, Any]]:
     ]
 
 
-def _file_digest(path: Path) -> str:
+def _file_digest(path: Path) -> str | None:
+    if not path.is_file():
+        return None
     return hashlib.sha256(path.read_bytes()).hexdigest()[:8]
 
 
@@ -95,7 +97,8 @@ async def async_register_card(hass: HomeAssistant) -> None:
     hass.data[_REGISTERED_KEY] = True
 
     card_path = Path(__file__).parent / "frontend" / CARD_FILENAME
-    if not card_path.is_file():
+    digest = await hass.async_add_executor_job(_file_digest, card_path)
+    if digest is None:
         _LOGGER.warning("%s not found at %s", CARD_FILENAME, card_path)
         return
 
@@ -104,7 +107,6 @@ async def async_register_card(hass: HomeAssistant) -> None:
     # The cache-busting version changes whenever the card file changes, so a card update
     # always reaches browsers even if the integration version was not bumped.
     integration = await async_get_integration(hass, DOMAIN)
-    digest = await hass.async_add_executor_job(_file_digest, card_path)
     version = f"{integration.version or '0'}-{digest}"
     url = f"{CARD_URL}?v={version}"
 
@@ -135,6 +137,7 @@ async def async_register_card(hass: HomeAssistant) -> None:
 
 async def async_unregister_card(hass: HomeAssistant) -> None:
     """Remove our Lovelace resource (called when the integration is removed)."""
+    hass.data.pop(_REGISTERED_KEY, None)
     mode, resources = _lovelace_resources(hass)
     if mode != "storage" or resources is None:
         return

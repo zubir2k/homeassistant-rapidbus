@@ -12,6 +12,8 @@ from .const import CONF_STALE_MINUTES, DEFAULT_STALE_MINUTES, DOMAIN
 from .coordinator import RouteCoordinator
 from .entity import RouteEntity
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: RouteCoordinator = entry.runtime_data
@@ -19,14 +21,12 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     trackers: dict[str, BusTracker] = {}
     registry = er.async_get(hass)
     prefix = f"{entry.entry_id}_bus_"
-
-    # Clean up buses left over from a previous run; live ones get re-added.
-    for ent in er.async_entries_for_config_entry(registry, entry.entry_id):
-        if ent.domain == "device_tracker" and ent.unique_id.startswith(prefix):
-            registry.async_remove(ent.entity_id)
+    setup_time = datetime.now(timezone.utc)
+    orphaned_cleaned = False
 
     @callback
     def _sync() -> None:
+        nonlocal orphaned_cleaned
         now = datetime.now(timezone.utc)
         new = []
         for plate in coordinator.data.buses:
@@ -43,12 +43,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
                     registry.async_remove(tr.entity_id)
                 else:
                     hass.async_create_task(tr.async_remove())
+        # Once the stale window has elapsed after setup, clean up registry entries
+        # for buses from previous runs that never reappeared.
+        if not orphaned_cleaned and now - setup_time > stale:
+            orphaned_cleaned = True
+            for ent in er.async_entries_for_config_entry(registry, entry.entry_id):
+                if (
+                    ent.domain == "device_tracker"
+                    and ent.unique_id.startswith(prefix)
+                    and ent.unique_id.removeprefix(prefix) not in trackers
+                ):
+                    registry.async_remove(ent.entity_id)
 
     _sync()
     entry.async_on_unload(coordinator.async_add_listener(_sync))
 
 
 class BusTracker(RouteEntity, TrackerEntity):
+    _attr_translation_key = "bus"
     _attr_icon = "mdi:bus"
 
     def __init__(self, coordinator: RouteCoordinator, plate: str) -> None:

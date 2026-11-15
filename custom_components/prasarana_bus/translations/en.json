@@ -21,13 +21,24 @@
         "data": {
           "stop": "Stop"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure stop",
+        "description": "Route {route}. Pick a stop to get an estimated arrival time and distance of the next bus, or select No stop for route tracking only.",
+        "data": {
+          "stop": "Stop"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Could not download route data from data.gov.my."
+      "cannot_connect": "Could not download route data from data.gov.my.",
+      "unknown": "Unexpected error occurred."
     },
     "abort": {
-      "already_configured": "This route and stop are already configured."
+      "already_configured": "This route and stop are already configured.",
+      "cannot_connect": "Could not download route data from data.gov.my.",
+      "reconfigure_successful": "Reconfiguration was successful.",
+      "unknown": "Unexpected error occurred."
     }
   },
   "options": {
@@ -76,6 +87,20 @@
     "refresh_static": {
       "name": "Refresh route data",
       "description": "Re-download GTFS static data (routes, stops, shapes) and reload all routes."
+    }
+  },
+  "exceptions": {
+    "static_download_failed": {
+      "message": "Cannot download GTFS static data: {error}"
+    },
+    "route_not_found": {
+      "message": "Route {route} is no longer in GTFS static data"
+    },
+    "realtime_feed_error": {
+      "message": "Realtime feed error: {error}"
+    },
+    "refresh_static_failed": {
+      "message": "Failed to refresh GTFS static data: {error}"
     }
   }
 }

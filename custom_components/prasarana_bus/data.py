@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from pathlib import Path
 import time
 
 import aiohttp
@@ -17,6 +18,28 @@ from .gtfs_static import GtfsStatic
 
 _LOGGER = logging.getLogger(__name__)
 RT_CACHE_SECONDS = 10
+
+
+def _read_fresh_cached_file(path: str) -> bytes | None:
+    """Read cached static GTFS file if it exists and is younger than STATIC_MAX_AGE."""
+    if os.path.exists(path) and time.time() - os.path.getmtime(path) < STATIC_MAX_AGE.total_seconds():
+        with open(path, "rb") as f:
+            return f.read()
+    return None
+
+
+def _read_cached_file(path: str) -> bytes | None:
+    """Read cached static GTFS file if it exists, regardless of age."""
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return f.read()
+    return None
+
+
+def _write_file(path: str, raw: bytes) -> None:
+    """Write raw bytes to path, creating parent directories if needed."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    Path(path).write_bytes(raw)
 
 
 class PrasaranaData:
@@ -39,30 +62,18 @@ class PrasaranaData:
                 return self._static[category]
             path = self._path(category)
 
-            def _read_cached() -> bytes | None:
-                if os.path.exists(path) and time.time() - os.path.getmtime(path) < STATIC_MAX_AGE.total_seconds():
-                    with open(path, "rb") as fh:
-                        return fh.read()
-                return None
-
-            raw = None if force else await self.hass.async_add_executor_job(_read_cached)
+            raw = None if force else await self.hass.async_add_executor_job(_read_fresh_cached_file, path)
             if raw is None:
                 session = async_get_clientsession(self.hass)
                 try:
                     async with session.get(STATIC_URL.format(category=category), timeout=aiohttp.ClientTimeout(total=120)) as resp:
                         resp.raise_for_status()
                         raw = await resp.read()
-
-                    def _write() -> None:
-                        os.makedirs(os.path.dirname(path), exist_ok=True)
-                        with open(path, "wb") as fh:
-                            fh.write(raw)
-
-                    await self.hass.async_add_executor_job(_write)
+                    await self.hass.async_add_executor_job(_write_file, path, raw)
                 except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-                    if os.path.exists(path):  # fall back to stale copy
+                    raw = await self.hass.async_add_executor_job(_read_cached_file, path)
+                    if raw is not None:  # fall back to stale copy
                         _LOGGER.warning("Static GTFS download failed (%s), using cached copy", err)
-                        raw = await self.hass.async_add_executor_job(lambda: open(path, "rb").read())
                     else:
                         raise
             static = await self.hass.async_add_executor_job(GtfsStatic, raw)

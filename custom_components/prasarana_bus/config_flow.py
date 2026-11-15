@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 from typing import Any
 
@@ -21,6 +22,8 @@ from .const import (
 )
 from .data import get_data
 from .gtfs_static import GtfsStatic, RouteDetail
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _natural(s: str):
@@ -57,6 +60,9 @@ class PrasaranaConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._static = await get_data(self.hass).async_get_static(self._category)
             except (aiohttp.ClientError, asyncio.TimeoutError):
                 errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Unexpected error fetching GTFS static data")
+                errors["base"] = "unknown"
             else:
                 return await self.async_step_route()
         schema = vol.Schema({
@@ -99,6 +105,48 @@ class PrasaranaConfigFlow(ConfigFlow, domain=DOMAIN):
         })
         return self.async_show_form(step_id="stop", data_schema=schema,
                                     description_placeholders={"route": self._detail.route.label})
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle reconfiguration of the monitored stop."""
+        reconfigure_entry = self._get_reconfigure_entry()
+        category = reconfigure_entry.data[CONF_CATEGORY]
+        route = reconfigure_entry.data[CONF_ROUTE]
+        try:
+            static = await get_data(self.hass).async_get_static(category)
+            detail = await self.hass.async_add_executor_job(static.detail, route)
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            return self.async_abort(reason="cannot_connect")
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Unexpected error loading route details for reconfigure")
+            return self.async_abort(reason="unknown")
+
+        if user_input is not None:
+            stop = user_input.get(CONF_STOP, NO_STOP)
+            new_unique_id = f"{category}_{route}_{stop}"
+            if new_unique_id != reconfigure_entry.unique_id:
+                await self.async_set_unique_id(new_unique_id)
+                self._abort_if_unique_id_configured()
+                self.hass.config_entries.async_update_entry(reconfigure_entry, unique_id=new_unique_id)
+            r = detail.route
+            title = f"Bus {r.short_name}"
+            if stop != NO_STOP:
+                title += f" @ {detail.stops[stop].short_name}"
+            return self.async_update_reload_and_abort(
+                reconfigure_entry,
+                title=title,
+                data_updates={CONF_STOP: stop},
+            )
+
+        current_stop = {**reconfigure_entry.data, **reconfigure_entry.options}.get(CONF_STOP, NO_STOP)
+        schema = vol.Schema({
+            vol.Required(CONF_STOP, default=current_stop): SelectSelector(SelectSelectorConfig(
+                options=_stop_options(detail), mode=SelectSelectorMode.DROPDOWN)),
+        })
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=schema,
+            description_placeholders={"route": detail.route.label},
+        )
 
     @staticmethod
     @callback
