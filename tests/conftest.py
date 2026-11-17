@@ -1,4 +1,14 @@
 """Fixtures for Rapid Bus Tracker tests."""
+try:
+    import pycares
+
+    if hasattr(pycares, "_shutdown_manager"):
+        pycares._shutdown_manager.start()
+    else:
+        pycares.Channel()
+except Exception:
+    pass
+
 from unittest.mock import patch
 import pytest
 
