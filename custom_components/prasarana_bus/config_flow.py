@@ -17,8 +17,8 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    CATEGORIES, CONF_CATEGORY, CONF_ROUTE, CONF_SCAN_INTERVAL, CONF_STALE_MINUTES, CONF_TIMETABLE_FALLBACK, CONF_STOP,
-    DEFAULT_SCAN_INTERVAL, DEFAULT_STALE_MINUTES, DOMAIN, MIN_SCAN_INTERVAL, NO_STOP,
+    CATEGORIES, CONF_CATEGORY, CONF_ROUTE, CONF_STALE_MINUTES, CONF_TIMETABLE_FALLBACK, CONF_STOP,
+    DEFAULT_STALE_MINUTES, DOMAIN, NO_STOP,
 )
 from .data import get_data
 from .gtfs_static import GtfsStatic, RouteDetail
@@ -160,9 +160,6 @@ class PrasaranaOptionsFlow(OptionsFlow):
             return self.async_create_entry(data=user_input)
         cur = {**self.config_entry.data, **self.config_entry.options}
         schema = vol.Schema({
-            vol.Required(CONF_SCAN_INTERVAL, default=cur.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)):
-                NumberSelector(NumberSelectorConfig(min=MIN_SCAN_INTERVAL, max=600, step=5,
-                                                    unit_of_measurement="s", mode=NumberSelectorMode.BOX)),
             vol.Required(CONF_STALE_MINUTES, default=cur.get(CONF_STALE_MINUTES, DEFAULT_STALE_MINUTES)):
                 NumberSelector(NumberSelectorConfig(min=1, max=120, step=1,
                                                     unit_of_measurement="min", mode=NumberSelectorMode.BOX)),
