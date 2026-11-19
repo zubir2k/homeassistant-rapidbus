@@ -218,7 +218,7 @@ class RapidBusCard extends HTMLElement {
     live.forEach((b) => {
       const stale = ageMin(b.last_seen) > 2;
       html += `<div class="row">${chip}<div class="mid"><div class="hs">${esc(title(b.heading_to) || "—")}</div>
-        <div class="sub">${esc(b.plate)} · ${b.distance_km != null ? `${b.distance_km} km away` : ""}${stale ? " · GPS lagging" : ""}</div></div>
+        <div class="sub">${esc(b.plate)} · ${b.distance_km != null ? `${esc(b.distance_km)} km away` : ""}${stale ? " · GPS lagging" : ""}</div></div>
         <div class="eta live"><span class="n">${fmtMin(b.eta_min)}</span>${b.eta_min >= 1 ? '<span class="u">min</span>' : ""}
         <div class="tag"><span class="pulse"></span>Live</div></div></div>`;
     });

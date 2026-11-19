@@ -26,6 +26,8 @@ from .gtfs_static import (
 
 _LOGGER = logging.getLogger(__name__)
 
+FEED_TIMEZONE = ZoneInfo(FEED_TZ)
+
 
 @dataclass
 class BusState:
@@ -68,7 +70,7 @@ class RouteCoordinator(DataUpdateCoordinator[RouteData]):
         self.route_stops = [[round(st.lat, 6), round(st.lon, 6), st.short_name] for st in self.detail.stops.values()]
         self.schedule = schedule
         self.timetable_fallback: bool = opts.get(CONF_TIMETABLE_FALLBACK, True)
-        self._tz = ZoneInfo(FEED_TZ)
+        self._tz = FEED_TIMEZONE
 
     async def _async_update_data(self) -> RouteData:
         try:
