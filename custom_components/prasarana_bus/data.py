@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, RT_URL, STATIC_MAX_AGE, STATIC_URL
-from .gtfs_rt import Vehicle, decode_feed as parse_feed
+from .gtfs_rt import Vehicle, decode_feed
 from .gtfs_static import GtfsStatic
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,7 +91,8 @@ class PrasaranaData:
             async with session.get(RT_URL.format(category=category), timeout=aiohttp.ClientTimeout(total=20)) as resp:
                 resp.raise_for_status()
                 raw = await resp.read()
-            header_ts, vehicles = parse_feed(raw)
+            vehicles = decode_feed(raw)
+            header_ts = max((v.timestamp for v in vehicles), default=0)
             self._rt[category] = (time.monotonic(), header_ts, vehicles)
             return header_ts, vehicles
 
