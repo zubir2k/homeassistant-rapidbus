@@ -3,7 +3,7 @@
  * Ships inside custom_components/prasarana_bus and is loaded automatically.
  * Map: Leaflet 1.9.4 (BSD-2) with OpenStreetMap tiles. Bus sprites: our own (tools/bus3d.py).
  */
-const BASE = new URL(".", import.meta.url).pathname.replace(/\/$/, "");
+const BASE = new URL(".", import.meta.url).href.replace(/\/$/, "");
 const VERSION = new URL(import.meta.url).searchParams.get("v") || "dev";
 const SPRITES = 32;
 const SUFFIXES = ["_next_bus_eta", "_next_bus_distance", "_next_bus_status", "_next_scheduled_bus", "_active_buses", "_feed_updated"];
