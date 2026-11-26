@@ -7,6 +7,7 @@ import re
 from typing import Any
 
 import aiohttp
+from rapidbus import RapidBusError
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
@@ -59,7 +60,7 @@ class PrasaranaConfigFlow(ConfigFlow, domain=DOMAIN):
             self._category = user_input[CONF_CATEGORY]
             try:
                 self._static = await get_data(self.hass).async_get_static(self._category)
-            except (aiohttp.ClientError, asyncio.TimeoutError):
+            except (RapidBusError, aiohttp.ClientError, asyncio.TimeoutError):
                 errors["base"] = "cannot_connect"
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Unexpected error fetching GTFS static data")

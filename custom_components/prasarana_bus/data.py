@@ -8,12 +8,13 @@ from pathlib import Path
 import time
 
 import aiohttp
+from rapidbus import RapidBusClient, RapidBusError
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, RT_URL, STATIC_MAX_AGE, STATIC_URL
-from .gtfs_rt import Vehicle, decode_feed
+from .const import DOMAIN, STATIC_MAX_AGE
+from .gtfs_rt import Vehicle
 from .gtfs_static import GtfsStatic
 
 _LOGGER = logging.getLogger(__name__)
@@ -64,13 +65,11 @@ class PrasaranaData:
 
             raw = None if force else await self.hass.async_add_executor_job(_read_fresh_cached_file, path)
             if raw is None:
-                session = async_get_clientsession(self.hass)
+                client = RapidBusClient(session=async_get_clientsession(self.hass))
                 try:
-                    async with session.get(STATIC_URL.format(category=category), timeout=aiohttp.ClientTimeout(total=120)) as resp:
-                        resp.raise_for_status()
-                        raw = await resp.read()
+                    raw = await client.async_get_static_zip(category)
                     await self.hass.async_add_executor_job(_write_file, path, raw)
-                except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+                except (RapidBusError, aiohttp.ClientError, asyncio.TimeoutError) as err:
                     raw = await self.hass.async_add_executor_job(_read_cached_file, path)
                     if raw is not None:  # fall back to stale copy
                         _LOGGER.warning("Static GTFS download failed (%s), using cached copy", err)
@@ -87,11 +86,8 @@ class PrasaranaData:
             cached = self._rt.get(category)
             if cached and time.monotonic() - cached[0] < RT_CACHE_SECONDS:
                 return cached[1], cached[2]
-            session = async_get_clientsession(self.hass)
-            async with session.get(RT_URL.format(category=category), timeout=aiohttp.ClientTimeout(total=20)) as resp:
-                resp.raise_for_status()
-                raw = await resp.read()
-            vehicles = decode_feed(raw)
+            client = RapidBusClient(session=async_get_clientsession(self.hass))
+            vehicles = await client.async_get_vehicles(category)
             header_ts = max((v.timestamp for v in vehicles), default=0)
             self._rt[category] = (time.monotonic(), header_ts, vehicles)
             return header_ts, vehicles

@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 
 import aiohttp
+from rapidbus import RapidBusError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -60,7 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PrasaranaConfigEntry) ->
     data = get_data(hass)
     try:
         static = await data.async_get_static(entry.data[CONF_CATEGORY])
-    except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+    except (RapidBusError, aiohttp.ClientError, asyncio.TimeoutError) as err:
         raise ConfigEntryNotReady(
             translation_domain=DOMAIN,
             translation_key="static_download_failed",

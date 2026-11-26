@@ -2,6 +2,13 @@
 from datetime import timedelta
 from enum import StrEnum
 
+from rapidbus import (
+    CATEGORIES as CATEGORIES,
+    FEED_TZ as FEED_TZ,
+    RT_URL_TEMPLATE as RT_URL,  # noqa: F401
+    STATIC_URL_TEMPLATE as STATIC_URL,  # noqa: F401
+)
+
 DOMAIN = "prasarana_bus"
 
 
@@ -9,17 +16,6 @@ class PrasaranaService(StrEnum):
     """Services for Rapid Bus Tracker."""
 
     REFRESH_STATIC = "refresh_static"
-
-
-RT_URL = "https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana/?category={category}"
-STATIC_URL = "https://api.data.gov.my/gtfs-static/prasarana?category={category}"
-
-CATEGORIES = {
-    "rapid-bus-kl": "RapidKL Bus (Klang Valley)",
-    "rapid-bus-mrtfeeder": "MRT Feeder Bus",
-    "rapid-bus-kuantan": "Rapid Kuantan",
-    "rapid-bus-penang": "Rapid Penang",
-}
 
 CONF_CATEGORY = "category"
 CONF_ROUTE = "route"
@@ -33,5 +29,4 @@ MIN_SCAN_INTERVAL = 15
 DEFAULT_STALE_MINUTES = 10
 STATIC_MAX_AGE = timedelta(days=7)
 NO_STOP = "__none__"
-FEED_TZ = "Asia/Kuala_Lumpur"  # agency timezone of all Prasarana feeds
 SCHEDULE_HORIZON_H = 6

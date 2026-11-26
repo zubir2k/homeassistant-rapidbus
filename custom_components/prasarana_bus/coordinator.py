@@ -9,6 +9,7 @@ import struct
 from zoneinfo import ZoneInfo
 
 import aiohttp
+from rapidbus import RapidBusError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -75,7 +76,7 @@ class RouteCoordinator(DataUpdateCoordinator[RouteData]):
     async def _async_update_data(self) -> RouteData:
         try:
             header_ts, vehicles = await get_data(self.hass).async_get_realtime(self.category)
-        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError, IndexError, struct.error) as err:
+        except (RapidBusError, aiohttp.ClientError, asyncio.TimeoutError, ValueError, IndexError, struct.error) as err:
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="realtime_feed_error",
