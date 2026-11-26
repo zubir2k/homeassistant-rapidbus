@@ -273,7 +273,7 @@ def _simplify(pts: list[tuple[float, float]], tol: float) -> list[tuple[float, f
         if idx is not None and best > tol:
             keep[idx] = True
             stack += [(a, idx), (idx, b)]
-    return [p for p, k in zip(pts, keep) if k]
+    return [p for p, k in zip(pts, keep, strict=True) if k]
 
 
 def route_geojson(detail: RouteDetail, tol: float = 0.00005) -> dict:

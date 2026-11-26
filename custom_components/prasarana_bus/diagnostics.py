@@ -3,10 +3,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from . import PrasaranaConfigEntry
 from .sensor import _bus_attr
+
+TO_REDACT = {"stop_id", "name", "lat", "lon"}
 
 
 async def async_get_config_entry_diagnostics(
@@ -16,8 +19,8 @@ async def async_get_config_entry_diagnostics(
     coordinator = entry.runtime_data
     data = coordinator.data
     return {
-        "entry_data": dict(entry.data),
-        "entry_options": dict(entry.options),
+        "entry_data": async_redact_data(dict(entry.data), TO_REDACT),
+        "entry_options": async_redact_data(dict(entry.options), TO_REDACT),
         "route": {
             "key": coordinator.route.key,
             "short_name": coordinator.route.short_name,
@@ -25,12 +28,15 @@ async def async_get_config_entry_diagnostics(
             "shapes_count": len(coordinator.detail.shapes),
             "stops_count": len(coordinator.detail.stops),
         },
-        "stop": {
-            "stop_id": coordinator.stop.stop_id,
-            "name": coordinator.stop.name,
-            "lat": coordinator.stop.lat,
-            "lon": coordinator.stop.lon,
-        }
+        "stop": async_redact_data(
+            {
+                "stop_id": coordinator.stop.stop_id,
+                "name": coordinator.stop.name,
+                "lat": coordinator.stop.lat,
+                "lon": coordinator.stop.lon,
+            },
+            TO_REDACT,
+        )
         if coordinator.stop
         else None,
         "realtime": {

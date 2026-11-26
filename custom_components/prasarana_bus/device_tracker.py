@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_STALE_MINUTES, DEFAULT_STALE_MINUTES, DOMAIN
+from .const import CONF_STALE_MINUTES, DEFAULT_STALE_MINUTES
 from .coordinator import RouteCoordinator
 from .entity import RouteEntity
 
