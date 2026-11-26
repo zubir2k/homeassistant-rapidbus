@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, RT_URL, STATIC_MAX_AGE, STATIC_URL
-from .gtfs_rt import Vehicle, parse_feed
+from .gtfs_rt import Vehicle, decode_feed as parse_feed
 from .gtfs_static import GtfsStatic
 
 _LOGGER = logging.getLogger(__name__)
